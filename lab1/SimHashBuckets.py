@@ -2,6 +2,31 @@ import sys
 import re
 import hashlib
 
+def lsh(simhashes, r = 16):
+    candidates = {}
+    for i in range(0, 128, r):
+        buckets = {}
+        for id in range(len(simhashes)):
+            id_simhash = simhashes[id]
+            id_bin_simhash = _hex_str_to_bin_str(id_simhash)
+            value = _bin_to_int(id_bin_simhash[i:i + r])
+            bucket_ids = set()
+            if value in buckets:
+                bucket_ids = buckets[value]
+                for candidate_id in bucket_ids:
+                    if id not in candidates:
+                        candidates[id] = set()
+                    if candidate_id not in candidates:
+                        candidates[candidate_id] = set()
+                    candidates[id].add(candidate_id)
+                    candidates[candidate_id].add(id)
+            bucket_ids.add(id)
+            buckets[value] = bucket_ids
+    return candidates
+
+def _bin_to_int(bin):
+    return int(bin, 2)
+
 def calculate_simhash(text):
     sh = [0] * 128
     units = re.sub('[\s+]', ' ', text.strip()).split()
@@ -14,14 +39,12 @@ def calculate_simhash(text):
     sh_hex_nibbles = [''.join(sh[x:x+4]) for x in range(0, 128, 4)]
     return ''.join([hex(int(x, 2))[2:] for x in sh_hex_nibbles])
 
-def find_similar_docs(simhashes, query_index, max_hamming_distance):
+def find_similar_docs(simhashes, candidates, query_index, max_hamming_distance):
     similar_docs = []
     query_simhash = simhashes[query_index]
-    for i in range(len(simhashes)):
-        if i == query_index:
-            continue
-        if _hamming_distance(query_simhash, simhashes[i]) <= max_hamming_distance:
-            similar_docs.append(simhashes[i])
+    for simhash_index in candidates[query_index]:
+        if _hamming_distance(query_simhash, simhashes[simhash_index]) <= max_hamming_distance:
+            similar_docs.append(simhashes[simhash_index])
     return similar_docs
 
 def _generate_unit_hash(unit):
@@ -46,10 +69,11 @@ if __name__ == "__main__":
     while N > 0:
         simhashes.append(calculate_simhash(sys.stdin.readline()))
         N -= 1
+    candidates = lsh(simhashes)
     Q = int(sys.stdin.readline())
     while Q > 0:
         query_data = sys.stdin.readline().split(' ')
         query_index = int(query_data[0])
         max_hamming_distance = int(query_data[1])
-        print(len(find_similar_docs(simhashes, query_index, max_hamming_distance)))
+        print(len(find_similar_docs(simhashes, candidates, query_index, max_hamming_distance)))
         Q -= 1

@@ -11,5 +11,5 @@ pyvenv.cfg
 pip-selfcheck.json
 
 # General
-tests
+tests*
 .idea
