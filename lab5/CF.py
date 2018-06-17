@@ -2,7 +2,15 @@ import sys
 from decimal import Decimal, ROUND_HALF_UP
 from math import sqrt
 
-def avg_rating_uu(ratings, i, j, k):
+def _columnify(matrix):
+    res = []
+    for j in range(len(matrix[0])):
+        res.append([])
+        for i in range(len(matrix)):
+            res[-1].append(matrix[i][j])
+    return res
+
+def avg_rating(ratings, i, j, k):
     cands = []
     for pos in range(len(ratings[0])):
         if pos == j:
@@ -53,15 +61,15 @@ def main():
 
     for i in range(N):
         ratings.append(list(map(lambda x: int(x) if x != 'X' else 0, sys.stdin.readline().rstrip('\n').split(' '))))
+    item_item_ratings = _columnify(ratings)
 
     Q = int(sys.stdin.readline())
     for i in range(Q):
         I, J, T, K = map(int, sys.stdin.readline().split(' '))
         if T == 1: #user-user
-            print(Decimal(Decimal(avg_rating_uu(ratings, I-1, J-1, K)).quantize(Decimal('.001'), rounding=ROUND_HALF_UP)))
+            print(Decimal(Decimal(avg_rating(ratings, I-1, J-1, K)).quantize(Decimal('.001'), rounding=ROUND_HALF_UP)))
         else: #item-item
-            #TODO !
-            pass
+            print(Decimal(Decimal(avg_rating(item_item_ratings, J-1, I-1, K)).quantize(Decimal('.001'), rounding=ROUND_HALF_UP)))
 
 if __name__ == '__main__':
     main()
